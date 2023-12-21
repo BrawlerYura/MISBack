@@ -1,3 +1,5 @@
+using MISBack.Data.Enums;
+
 namespace MISBack.Data.Models;
 
 public class IcdRootsReportRecordModel
