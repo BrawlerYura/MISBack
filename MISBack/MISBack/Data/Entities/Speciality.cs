@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MISBack.Data.Models;
+namespace MISBack.Data.Entities;
 
-public class Icd10RecordModel
+public class Speciality
 {
     [Required]
     public Guid Id { get; set; }
@@ -10,7 +10,7 @@ public class Icd10RecordModel
     [Required]
     public DateTime CreateTime { get; set; }
     
-    public string? Code { get; set; }
-    
-    public string? Name { get; set; }
+    [Required]
+    [MinLength(1)]
+    public string Name { get; set; }
 }
