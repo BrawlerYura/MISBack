@@ -20,6 +20,7 @@ public class DoctorModel
     public Gender Gender { get; set; }
     
     [Required]
+    [MinLength(1)]
     [EmailAddress]
     public string Email { get; set; }
     
