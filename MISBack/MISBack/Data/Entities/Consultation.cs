@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using MISBack.Data.Models;
 
-namespace MISBack.Data.Models;
+namespace MISBack.Data.Entities;
 
-public class ConsultationModel
+public class Consultation
 {
     [Required]
     public Guid Id { get; set; }
