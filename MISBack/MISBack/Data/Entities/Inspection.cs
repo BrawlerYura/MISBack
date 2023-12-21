@@ -1,9 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using MISBack.Data.Enums;
 
-namespace MISBack.Data.Models;
+namespace MISBack.Data.Entities;
 
-public class InspectionModel
+public class Inspection
 {
     [Required]
     public Guid Id { get; set; }
@@ -30,11 +30,9 @@ public class InspectionModel
     public Guid? PreviousInspectionId { get; set; }
     
     [Required]
-    public PatientModel Patient { get; set; }
+    public Guid Patient { get; set; }
     
-    public DoctorModel? Doctor { get; set; }
-    
-    public List<DiagnosisModel>? Diagnoses { get; set; }
-    
-    public List<InspectionConsultationModel>? Consultations { get; set; }
+    public Guid? DoctorId { get; set; }
+
+    public bool IsWithDiagnosis { get; set; } = false;
 }
