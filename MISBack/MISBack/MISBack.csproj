@@ -15,6 +15,7 @@
     <ItemGroup>
       <Folder Include="Data\Entities\" />
       <Folder Include="Data\Enums\" />
+      <Folder Include="Data\Models\" />
     </ItemGroup>
 
 </Project>
