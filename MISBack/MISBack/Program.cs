@@ -1,5 +1,4 @@
 using BlogApi.Configurations;
-using BlogApi.Services.Token;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using MISBack.Data;
 using MISBack.Services;
 using MISBack.Services.Interfaces;
+using MISBack.Services.Token;
 
 var builder = WebApplication.CreateBuilder(args);
 

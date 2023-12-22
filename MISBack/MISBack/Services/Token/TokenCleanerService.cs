@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MISBack.Data;
 
-namespace BlogApi.Services.Token;
+namespace MISBack.Services.Token;
 
 public class TokenCleanerService : BackgroundService
 {
