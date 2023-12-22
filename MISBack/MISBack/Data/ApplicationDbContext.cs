@@ -3,7 +3,7 @@ using MISBack.Data.Entities;
 
 namespace MISBack.Data;
 
-public class ApplicationDBContext : DbContext
+public class ApplicationDbContext : DbContext
 {
     public DbSet<Comment> Comment { get; set; }
     public DbSet<Consultation> Consultation { get; set; }
@@ -13,8 +13,9 @@ public class ApplicationDBContext : DbContext
     public DbSet<Inspection> Inspection { get; set; }
     public DbSet<Patient> Patient { get; set; }
     public DbSet<Speciality> Speciality { get; set; }
+    public DbSet<Token> Token { get; set; }
 
-    public ApplicationDBContext(DbContextOptions<ApplicationDBContext> options)
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
         Database.Migrate();
@@ -31,7 +32,7 @@ public class ApplicationDBContext : DbContext
         modelBuilder.Entity<Patient>().HasKey(x => x.Id);
         modelBuilder.Entity<Speciality>().HasKey(x => x.Id);
         modelBuilder.Entity<Token>().HasKey(x => x.InvalidToken);
-        
+
         base.OnModelCreating(modelBuilder);
     }
 }
