@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MISBack.Data.Models;
+using MISBack.Services.Interfaces;
 
 namespace MISBack.Controllers;
 
