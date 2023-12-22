@@ -12,23 +12,6 @@ namespace MISBack.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Comment",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Content = table.Column<string>(type: "text", nullable: false),
-                    AuthorId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ParentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    ConsultationId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Comment", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Diagnosis",
                 columns: table => new
                 {
@@ -130,19 +113,6 @@ namespace MISBack.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SpecialityModel",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SpecialityModel", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Token",
                 columns: table => new
                 {
@@ -167,14 +137,14 @@ namespace MISBack.Migrations
                 {
                     table.PrimaryKey("PK_Consultation", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Consultation_SpecialityModel_SpecialityId",
+                        name: "FK_Consultation_Speciality_SpecialityId",
                         column: x => x.SpecialityId,
-                        principalTable: "SpecialityModel",
+                        principalTable: "Speciality",
                         principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
-                name: "CommentModel",
+                name: "Comment",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -182,23 +152,23 @@ namespace MISBack.Migrations
                     ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Content = table.Column<string>(type: "text", nullable: false),
                     AuthorId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Author = table.Column<string>(type: "text", nullable: false),
                     ParentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    ConsultationId = table.Column<Guid>(type: "uuid", nullable: true)
+                    ConsultationId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CommentModel", x => x.Id);
+                    table.PrimaryKey("PK_Comment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CommentModel_Consultation_ConsultationId",
+                        name: "FK_Comment_Consultation_ConsultationId",
                         column: x => x.ConsultationId,
                         principalTable: "Consultation",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_CommentModel_ConsultationId",
-                table: "CommentModel",
+                name: "IX_Comment_ConsultationId",
+                table: "Comment",
                 column: "ConsultationId");
 
             migrationBuilder.CreateIndex(
@@ -212,9 +182,6 @@ namespace MISBack.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Comment");
-
-            migrationBuilder.DropTable(
-                name: "CommentModel");
 
             migrationBuilder.DropTable(
                 name: "Diagnosis");
@@ -232,16 +199,13 @@ namespace MISBack.Migrations
                 name: "Patient");
 
             migrationBuilder.DropTable(
-                name: "Speciality");
-
-            migrationBuilder.DropTable(
                 name: "Token");
 
             migrationBuilder.DropTable(
                 name: "Consultation");
 
             migrationBuilder.DropTable(
-                name: "SpecialityModel");
+                name: "Speciality");
         }
     }
 }

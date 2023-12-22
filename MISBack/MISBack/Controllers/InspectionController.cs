@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MISBack.Data.Models;
+using MISBack.Services.Interfaces;
 
 namespace MISBack.Controllers;
 
@@ -8,11 +10,11 @@ namespace MISBack.Controllers;
 [Route("api/inspection")]
 public class InspectionController : ControllerBase
 {
-    private readonly IDoctorService _doctorService;
+    private readonly IInspectionService _inspectionService;
 
-    public InspectionController(IDoctorService doctorService)
+    public InspectionController(IInspectionService inspectionService)
     {
-        _doctorService = doctorService;
+        _inspectionService = inspectionService;
     }
     
     [HttpGet]
@@ -20,7 +22,7 @@ public class InspectionController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<InspectionModel> GetInspectionInfo(Guid inspectionId)
     {
-        return await _doctorService.GetInspectionInfo(inspectionId);
+        return await _inspectionService.GetInspectionInfo(inspectionId);
     }
     
     [HttpPut]
@@ -28,7 +30,7 @@ public class InspectionController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<InspectionModel> EditInspection(Guid inspectionId, InspectionEditModel inspectionEditModel)
     {
-        return await _doctorService.EditInspection(inspectionId, inspectionEditModel);
+        return await _inspectionService.EditInspection(inspectionId, inspectionEditModel);
     }
     
     [HttpGet]
@@ -36,6 +38,6 @@ public class InspectionController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<InspectionModel> GetInspectionForRoot(Guid inspectionId)
     {
-        return await _doctorService.GetInspectionForRoot(inspectionId);
+        return await _inspectionService.GetInspectionForRoot(inspectionId);
     }
 }

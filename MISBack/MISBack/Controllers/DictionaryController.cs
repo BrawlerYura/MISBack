@@ -3,6 +3,7 @@ using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using MISBack.Data.Models;
 using MISBack.Services.Interfaces;
+using IDictionaryService = MISBack.Services.Interfaces.IDictionaryService;
 
 namespace MISBack.Controllers;
 
@@ -10,9 +11,9 @@ namespace MISBack.Controllers;
 [Route("api/dictionary")]
 public class DictionaryController
 {
-    private readonly IDictionaryInterface _dictionaryService;
+    private readonly IDictionaryService _dictionaryService;
 
-    public DictionaryController(IDictionaryInterface dictionaryService)
+    public DictionaryController(IDictionaryService dictionaryService)
     {
         _dictionaryService = dictionaryService;
     }

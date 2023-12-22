@@ -3,7 +3,7 @@ using MISBack.Services.Interfaces;
 
 namespace MISBack.Services;
 
-public class DictionaryService : IDictionaryInterface
+public class DictionaryService : IDictionaryService
 {
     public Task<SpecialtiesPagedListModel> GetSpecialtiesList(string? name, int page = 1, int size = 5)
     {

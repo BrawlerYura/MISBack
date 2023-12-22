@@ -8,9 +8,9 @@ public interface IDoctorService
 
     Task<TokenResponseModel> Login(LoginCredentialsModel credentials);
 
-    Task Logout();
+    Task Logout(string token);
 
-    Task<DoctorModel> GetDoctorProfile();
+    Task<DoctorModel> GetDoctorProfile(Guid userId);
 
-    Task<DoctorEditModel> EditDoctorProfile();
+    Task<DoctorEditModel> EditDoctorProfile(Guid userId);
 }

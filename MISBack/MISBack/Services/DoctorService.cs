@@ -15,17 +15,17 @@ public class DoctorService : IDoctorService
         throw new NotImplementedException();
     }
 
-    public Task Logout()
+    public Task Logout(string token)
     {
         throw new NotImplementedException();
     }
 
-    public Task<DoctorModel> GetDoctorProfile()
+    public Task<DoctorModel> GetDoctorProfile(Guid userId)
     {
         throw new NotImplementedException();
     }
 
-    public Task<DoctorEditModel> EditDoctorProfile()
+    public Task<DoctorEditModel> EditDoctorProfile(Guid userId)
     {
         throw new NotImplementedException();
     }
