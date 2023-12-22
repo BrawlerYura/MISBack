@@ -37,6 +37,7 @@ public class DoctorController : ControllerBase
     [HttpPost]
     [Route("logout")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Policy = "ValidateToken")]
     public async Task Logout()
     {
         var token = await HttpContext.GetTokenAsync("access_token");
@@ -51,10 +52,13 @@ public class DoctorController : ControllerBase
     [HttpGet]
     [Route("profile")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Policy = "ValidateToken")]
     public async Task<DoctorModel> GetDoctorProfile()
     {
-        var userId = Guid.Parse(User.Claims.FirstOrDefault(claim => claim.Type == ClaimsIdentity.DefaultNameClaimType)
-            ?.Value ?? string.Empty);
+        var value = User.Claims.FirstOrDefault(claim => claim.Type == ClaimsIdentity.DefaultNameClaimType)?.Value;
+        if (value == null) throw new Exception();
+        
+        var userId = Guid.Parse(value);
         
         return await _doctorService.GetDoctorProfile(userId);
     }
@@ -62,11 +66,13 @@ public class DoctorController : ControllerBase
     [HttpPut]
     [Route("profile")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<DoctorEditModel> EditDoctorProfile()
+    [Authorize(Policy = "ValidateToken")]
+    public async Task EditDoctorProfile(DoctorEditModel doctorEditModel)
     {
-        var userId = Guid.Parse(User.Claims.FirstOrDefault(claim => claim.Type == ClaimsIdentity.DefaultNameClaimType)
-            ?.Value ?? string.Empty);
+        var value = User.Claims.FirstOrDefault(claim => claim.Type == ClaimsIdentity.DefaultNameClaimType)?.Value;
+        if (value == null) throw new Exception();
         
-        return await _doctorService.EditDoctorProfile(userId);
+        var userId = Guid.Parse(value);
+        await _doctorService.EditDoctorProfile(userId, doctorEditModel);
     }
 }

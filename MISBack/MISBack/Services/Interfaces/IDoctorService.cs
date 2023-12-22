@@ -12,5 +12,5 @@ public interface IDoctorService
 
     Task<DoctorModel> GetDoctorProfile(Guid userId);
 
-    Task<DoctorEditModel> EditDoctorProfile(Guid userId);
+    Task EditDoctorProfile(Guid doctorId, DoctorEditModel doctorEditModel);
 }
