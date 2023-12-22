@@ -6,8 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MISBack.Data;
-using MISBack.Data.Entities;
-using MISBack.Data.Models;
 using MISBack.Services;
 using MISBack.Services.Interfaces;
 
