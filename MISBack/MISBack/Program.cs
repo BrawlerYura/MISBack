@@ -10,13 +10,13 @@ builder.Services.AddSwaggerGen();
 
 //DB
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDBContext>(options => options.UseNpgsql(connection));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connection));
 
 var app = builder.Build();
 
 //Auto migrations
 using var serviceScope = app.Services.CreateScope();
-var context = serviceScope.ServiceProvider.GetService<ApplicationDBContext>();
+var context = serviceScope.ServiceProvider.GetService<ApplicationDbContext>();
 
 context?.Database.Migrate();
 

@@ -25,12 +25,12 @@ public class PatientController : ControllerBase
 
     [HttpGet]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<PatientPagedListModel> CreatePatient([FromQuery] string? name,
+    public async Task<PatientPagedListModel> GetPatientsList([FromQuery] string? name,
         [FromQuery] List<string> conclusions, [FromQuery] PatientSorting sorting,
         [FromQuery] bool scheduledVisits = false, [FromQuery] bool onlyMine = false, [FromQuery] int page = 1,
         [FromQuery] int size = 5)
     {
-        return await _patientService.CreatePatient(name, conclusions, sorting, scheduledVisits, onlyMine, page, size);
+        return await _patientService.GetPatientsList(name, conclusions, sorting, scheduledVisits, onlyMine, page, size);
     }
     
     [HttpPost]
