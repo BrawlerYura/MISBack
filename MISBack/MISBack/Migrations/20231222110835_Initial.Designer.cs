@@ -11,8 +11,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace MISBack.Migrations
 {
-    [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20231221170049_Initial")]
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20231222110835_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -51,6 +51,8 @@ namespace MISBack.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ConsultationId");
 
                     b.ToTable("Comment");
                 });
@@ -267,74 +269,22 @@ namespace MISBack.Migrations
                     b.ToTable("Token");
                 });
 
-            modelBuilder.Entity("MISBack.Data.Models.CommentModel", b =>
+            modelBuilder.Entity("MISBack.Data.Entities.Comment", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Author")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ConsultationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConsultationId");
-
-                    b.ToTable("CommentModel");
-                });
-
-            modelBuilder.Entity("MISBack.Data.Models.SpecialityModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SpecialityModel");
+                    b.HasOne("MISBack.Data.Entities.Consultation", null)
+                        .WithMany("Comments")
+                        .HasForeignKey("ConsultationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MISBack.Data.Entities.Consultation", b =>
                 {
-                    b.HasOne("MISBack.Data.Models.SpecialityModel", "Speciality")
+                    b.HasOne("MISBack.Data.Entities.Speciality", "Speciality")
                         .WithMany()
                         .HasForeignKey("SpecialityId");
 
                     b.Navigation("Speciality");
-                });
-
-            modelBuilder.Entity("MISBack.Data.Models.CommentModel", b =>
-                {
-                    b.HasOne("MISBack.Data.Entities.Consultation", null)
-                        .WithMany("Comments")
-                        .HasForeignKey("ConsultationId");
                 });
 
             modelBuilder.Entity("MISBack.Data.Entities.Consultation", b =>

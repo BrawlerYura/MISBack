@@ -1,14 +1,11 @@
-using System.ComponentModel.DataAnnotations;
 using MISBack.Data.Enums;
 
 namespace MISBack.Data.Entities;
 
 public class Inspection
 {
-    [Required]
     public Guid Id { get; set; }
     
-    [Required]
     public DateTime CreateTime { get; set; }
     
     public DateTime? Date {  get; set; }
@@ -29,7 +26,6 @@ public class Inspection
     
     public Guid? PreviousInspectionId { get; set; }
     
-    [Required]
     public Guid Patient { get; set; }
     
     public Guid? DoctorId { get; set; }
