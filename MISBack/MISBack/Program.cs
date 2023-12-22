@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MISBack.AutoMapper;
 using MISBack.Data;
 using MISBack.Services;
 using MISBack.Services.Interfaces;
@@ -49,9 +50,15 @@ builder.Services.AddSwaggerGen(opt =>
 //Token cleaner
 builder.Services.AddHostedService<TokenCleanerService>();
 
+//Token validator
+builder.Services.AddSingleton<IAuthorizationHandler, ValidateTokenHandler>();
+
 //DB
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connection));
+
+// AutoMapping
+builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 //Services
 builder.Services.AddScoped<IConsultationService, ConsultationService>();
@@ -64,7 +71,12 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddHttpContextAccessor();
 
 //Auth
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        "ValidateToken",
+        policy => policy.Requirements.Add(new ValidateTokenRequirement()));
+});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
