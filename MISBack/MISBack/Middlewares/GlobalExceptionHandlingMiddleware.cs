@@ -82,5 +82,40 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(json);
         }
+        catch (UnauthorizedAccessException unauthorizedAccessException)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+
+            ExceptionDetails problem = new()
+            {
+                Status = (int)HttpStatusCode.Unauthorized,
+                Type = "Unauthorized",
+                Title = "Unauthorized",
+                Detail = unauthorizedAccessException.Message
+            };
+
+            string json = JsonSerializer.Serialize(problem);
+
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(json);
+        }
+        catch (Exception e)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+            ExceptionDetails problem = new()
+            {
+                Status = (int)HttpStatusCode.InternalServerError,
+                Type = "Server error",
+                Title = "Server error",
+                Detail = e.Message
+            };
+
+            string json = JsonSerializer.Serialize(problem);
+
+            context.Response.ContentType = "application/json";
+            
+            await context.Response.WriteAsync(json);
+        }
     }
 }
