@@ -48,5 +48,22 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(json);
         }
+        catch (ConflictException conflictException)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+
+            ExceptionDetails problem = new()
+            {
+                Status = (int)HttpStatusCode.Conflict,
+                Type = "Conflict",
+                Title = "Conflict",
+                Detail = conflictException.Message
+            };
+
+            string json = JsonSerializer.Serialize(problem);
+
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(json);
+        }
     }
 }
