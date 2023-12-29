@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using BlogApi.Exceptions;
 using MISBack.Data.Models;
 
 namespace MISBack.MiddleWares;
@@ -40,6 +41,40 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
                 Type = "Not Found",
                 Title = "Not Found",
                 Detail = keyNotFoundException.Message
+            };
+
+            string json = JsonSerializer.Serialize(problem);
+
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(json);
+        }
+        catch (ForbiddenException forbiddenException)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+
+            ExceptionDetails problem = new()
+            {
+                Status = (int)HttpStatusCode.Forbidden,
+                Type = "Forbidden",
+                Title = "Forbidden",
+                Detail = forbiddenException.Message
+            };
+
+            string json = JsonSerializer.Serialize(problem);
+
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(json);
+        }
+        catch (ConflictException conflictException)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+
+            ExceptionDetails problem = new()
+            {
+                Status = (int)HttpStatusCode.Conflict,
+                Type = "Conflict",
+                Title = "Conflict",
+                Detail = conflictException.Message
             };
 
             string json = JsonSerializer.Serialize(problem);
