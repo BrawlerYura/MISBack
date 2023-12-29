@@ -30,5 +30,22 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(json);
         }
+        catch (KeyNotFoundException keyNotFoundException)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+
+            ExceptionDetails problem = new()
+            {
+                Status = (int)HttpStatusCode.NotFound,
+                Type = "Not Found",
+                Title = "Not Found",
+                Detail = keyNotFoundException.Message
+            };
+
+            string json = JsonSerializer.Serialize(problem);
+
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(json);
+        }
     }
 }
