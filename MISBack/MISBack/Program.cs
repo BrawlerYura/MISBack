@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MISBack.AutoMapper;
 using MISBack.Data;
+using MISBack.MiddleWares;
 using MISBack.Services;
 using MISBack.Services.Interfaces;
 using MISBack.Services.Token;
@@ -109,6 +110,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.UseAuthorization();
 
