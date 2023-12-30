@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using MISBack.Data;
+using MISBack.Data.Entities;
 using MISBack.Data.Models;
 using MISBack.Migrations;
 using MISBack.Services.Interfaces;
@@ -60,9 +61,33 @@ public class InspectionService : IInspectionService
         return inspectionModel;
     }
 
-    public Task<InspectionModel> EditInspection(Guid inspectionId, InspectionEditModel inspectionEditModel)
+    public async Task EditInspection(Guid inspectionId, InspectionEditModel inspectionEditModel)
     {
-        throw new NotImplementedException();
+        var inspectionEntity = await _context.Inspection
+            .FirstOrDefaultAsync(x => x.Id == inspectionId);
+        if (inspectionEntity == null)
+        {
+            throw new KeyNotFoundException($"inspection with id {inspectionId} not found");
+        }
+
+        inspectionEntity.Anamnesis =  inspectionEditModel.Anamnesis;
+        inspectionEntity.Complaints = inspectionEditModel.Complaints;
+        inspectionEntity.Treatment =  inspectionEditModel.Treatment;
+        inspectionEntity.Conclusion = inspectionEditModel.Conclusion;
+        inspectionEntity.NextVisitDate = inspectionEditModel.NextVisitDate;
+        inspectionEntity.DeathDate = inspectionEditModel.DeathDate;
+
+        await _context.SaveChangesAsync();
+        
+        foreach (var diagnosis in inspectionEditModel.Diagnoses)
+        {
+            await _context.Diagnosis.AddAsync(new Diagnosis
+                {
+                    Id = diagnosis.IcdDiagnosisId
+                }
+            );
+            await _context.SaveChangesAsync();
+        }
     }
 
     public Task<InspectionModel> GetInspectionForRoot(Guid inspectionId)
