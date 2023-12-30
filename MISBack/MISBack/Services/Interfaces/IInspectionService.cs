@@ -6,7 +6,7 @@ public interface IInspectionService
 {
     Task<InspectionModel> GetInspectionInfo(Guid inspectionId);
 
-    Task<InspectionModel> EditInspection(Guid inspectionId, InspectionEditModel inspectionEditModel);
+    Task EditInspection(Guid inspectionId, InspectionEditModel inspectionEditModel);
 
     Task<InspectionModel> GetInspectionForRoot(Guid inspectionId);
 }

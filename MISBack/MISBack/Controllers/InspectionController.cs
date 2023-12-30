@@ -28,9 +28,9 @@ public class InspectionController : ControllerBase
     [HttpPut]
     [Route("{inspectionId}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<InspectionModel> EditInspection(Guid inspectionId, InspectionEditModel inspectionEditModel)
+    public async Task EditInspection(Guid inspectionId, InspectionEditModel inspectionEditModel)
     {
-        return await _inspectionService.EditInspection(inspectionId, inspectionEditModel);
+        await _inspectionService.EditInspection(inspectionId, inspectionEditModel);
     }
     
     [HttpGet]
