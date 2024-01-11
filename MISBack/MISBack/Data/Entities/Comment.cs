@@ -15,4 +15,6 @@ public class Comment
     public Guid? ParentId { get; set; }
     
     public Guid ConsultationId { get; set; }
+
+    public bool IsRootComment { get; set; } = false;
 }

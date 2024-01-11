@@ -14,7 +14,7 @@ public class InspectionConsultationModel
     
     public SpecialityModel? Speciality { get; set; }
     
-    public InspectionCommentModel? RootComment { get; set; }
+    public InspectionCommentModel RootComment { get; set; }
     
-    public int? CommentsNumber { get; set; }
+    public int CommentsNumber { get; set; }
 }

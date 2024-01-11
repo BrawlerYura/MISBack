@@ -10,7 +10,5 @@ public class Consultation
     
     public Guid InspectionId { get; set; }
     
-    public Speciality? Speciality { get; set; }
-    
-    public List<Comment>? Comments { get; set; }
+    public Guid? SpecialityId { get; set; }
 }

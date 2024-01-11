@@ -36,7 +36,7 @@ public class InspectionController : ControllerBase
     [HttpGet]
     [Route("{inspectionId}/chain")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<InspectionModel> GetInspectionForRoot(Guid inspectionId)
+    public async Task<List<InspectionPreviewModel>> GetInspectionForRoot(Guid inspectionId)
     {
         return await _inspectionService.GetInspectionForRoot(inspectionId);
     }

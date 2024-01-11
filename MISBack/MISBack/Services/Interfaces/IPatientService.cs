@@ -5,12 +5,12 @@ namespace MISBack.Services.Interfaces;
 
 public interface IPatientService
 {
-    Task<TokenResponseModel> CreatePatient(PatientCreateModel patientCreateModel);
+    Task<Guid> CreatePatient(PatientCreateModel patientCreateModel);
 
     Task<PatientPagedListModel> GetPatientsList(string? name, List<string> conclusions, PatientSorting sorting,
         bool scheduledVisits = false, bool onlyMine = false, int page = 1, int size = 5);
 
-    Task<InspectionCreateModel> CreateInspectionForPatient(Guid patientId);
+    Task<Guid> CreateInspectionForPatient(Guid patientId, Guid doctorId, InspectionCreateModel inspectionCreateModel);
 
     Task<InspectionPagedListModel> GetPatientsInspectionsList(Guid patientId, List<string>? icdRoots,
         bool grouped = false, int page = 1, int size = 5);

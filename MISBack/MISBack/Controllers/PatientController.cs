@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ public class PatientController : ControllerBase
 
     [HttpPost]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<TokenResponseModel> CreatePatient(PatientCreateModel patientCreateModel)
+    public async Task<Guid> CreatePatient(PatientCreateModel patientCreateModel)
     {
         return await _patientService.CreatePatient(patientCreateModel);
     }
@@ -38,9 +39,14 @@ public class PatientController : ControllerBase
     [HttpPost]
     [Route("{patientId}/inspections")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<InspectionCreateModel> CreateInspectionForPatient(Guid patientId)
+    public async Task<Guid> CreateInspectionForPatient(Guid patientId, InspectionCreateModel inspectionCreateModel)
     {
-        return await _patientService.CreateInspectionForPatient(patientId);
+        var value = User.Claims.FirstOrDefault(claim => claim.Type == ClaimsIdentity.DefaultNameClaimType)?.Value;
+        if (value == null) throw new Exception();
+        
+        var doctorId = Guid.Parse(value);
+        
+        return await _patientService.CreateInspectionForPatient(patientId, doctorId, inspectionCreateModel);
     }
     
     [HttpGet]

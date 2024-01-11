@@ -16,5 +16,5 @@ public class InspectionCommentModel
     
     public DoctorModel? Author { get; set; }
     
-    public DateTime? ModifyTime { get; set; }
+    public DateTime? ModifiedDate { get; set; }
 }

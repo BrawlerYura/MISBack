@@ -14,6 +14,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Patient> Patient { get; set; }
     public DbSet<Speciality> Speciality { get; set; }
     public DbSet<Token> Token { get; set; }
+    public DbSet<InspectionDiagnosis> InspectionDiagnosis { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -32,6 +33,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Patient>().HasKey(x => x.Id);
         modelBuilder.Entity<Speciality>().HasKey(x => x.Id);
         modelBuilder.Entity<Token>().HasKey(x => x.InvalidToken);
+        modelBuilder.Entity<InspectionDiagnosis>().HasKey(x => new { x.InspectionId, x.DiagnosisId });
 
         base.OnModelCreating(modelBuilder);
     }

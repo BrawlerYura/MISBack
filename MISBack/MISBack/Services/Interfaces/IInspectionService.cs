@@ -8,5 +8,5 @@ public interface IInspectionService
 
     Task EditInspection(Guid inspectionId, InspectionEditModel inspectionEditModel);
 
-    Task<InspectionModel> GetInspectionForRoot(Guid inspectionId);
+    Task<List<InspectionPreviewModel>> GetInspectionForRoot(Guid inspectionId);
 }

@@ -11,7 +11,7 @@ public class InspectionPreviewModel
     [Required]
     public DateTime CreateTime { get; set; }
     
-    public Guid? PreviousId { get; set; }
+    public Guid? PreviousInspectionId { get; set; }
     
     [Required]
     public DateTime Date {  get; set; }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ namespace MISBack.Controllers;
 
 [ApiController]
 [Route("api/consultation")]
-public class ConsultationController
+public class ConsultationController : ControllerBase
 {
     private readonly IConsultationService _consultationService;
 
@@ -20,7 +21,7 @@ public class ConsultationController
     [HttpGet]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<InspectionPagedListModel> GetInspectionsList([FromQuery] bool grouped,
-        [FromQuery] List<string> icdRoots, [FromQuery] int page, [FromQuery] int size)
+        [FromQuery] List<string>? icdRoots, [FromQuery] int page, [FromQuery] int size)
     {
         return await _consultationService.GetInspectionsList(grouped, icdRoots, page, size);
     }
@@ -38,7 +39,12 @@ public class ConsultationController
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<Guid> AddComment(Guid consultationId, CommentCreateModel comment)
     {
-        return await _consultationService.AddComment(consultationId, comment);
+        var value = User.Claims.FirstOrDefault(claim => claim.Type == ClaimsIdentity.DefaultNameClaimType)?.Value;
+        if (value == null) throw new Exception();
+        
+        var authorId = Guid.Parse(value);
+        
+        return await _consultationService.AddComment(consultationId, authorId, comment);
     }
     
     [HttpPut]

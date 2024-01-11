@@ -29,6 +29,4 @@ public class Inspection
     public Guid PatientId { get; set; }
     
     public Guid DoctorId { get; set; }
-
-    public bool IsWithDiagnosis { get; set; } = false;
 }

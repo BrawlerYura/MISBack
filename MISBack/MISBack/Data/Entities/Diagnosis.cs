@@ -15,6 +15,4 @@ public class Diagnosis
     public string? Description { get; set; }
     
     public DiagnosisType Type { get; set; }
-    
-    public Guid InspectionId { get; set; }
 }
