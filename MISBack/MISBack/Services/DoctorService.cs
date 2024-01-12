@@ -31,6 +31,7 @@ public class DoctorService : IDoctorService
         CheckPassword(doctorRegisterModel.Password);
 
         await UniqueCheck(doctorRegisterModel);
+        await SpecialitiesCheck(doctorRegisterModel.Speciality);
 
         var salt = BCrypt.Net.BCrypt.GenerateSalt();
         var hashedPassword = BCrypt.Net.BCrypt.HashPassword(doctorRegisterModel.Password, salt);
@@ -47,7 +48,8 @@ public class DoctorService : IDoctorService
             Gender = doctorRegisterModel.Gender,
             Password = hashedPassword,
             Phone = doctorRegisterModel.Phone,
-            CreateTime = DateTime.UtcNow
+            CreateTime = DateTime.UtcNow,
+            Speciality = doctorRegisterModel.Speciality
         });
         await _context.SaveChangesAsync();
 
@@ -126,7 +128,26 @@ public class DoctorService : IDoctorService
             throw new UnauthorizedAccessException("User not exists");
         }
 
-        await UniqueCheck(_mapper.Map<DoctorRegisterModel>(doctorEditModel));
+        var doctor = await _context.Doctor
+            .Where(d => d.Email == doctorEditModel.Email)
+            .FirstOrDefaultAsync();
+
+        if (doctor != null && doctor.Id != doctorId)
+        {
+            throw new BadHttpRequestException("Doctor with this Email already exists");
+        }
+        
+        if(doctorEditModel.Phone != null)
+        {
+            doctor = await _context.Doctor
+                .Where(d => d.Phone == doctorEditModel.Phone)
+                .FirstOrDefaultAsync();
+
+            if (doctor != null)
+            {
+                throw new BadHttpRequestException("Doctor with this Phone number already exists");
+            }
+        }
         
         CheckGender(doctorEditModel.Gender);
         CheckBirthDate(doctorEditModel.BirthDate);
@@ -164,6 +185,15 @@ public class DoctorService : IDoctorService
         }
     }
 
+    private async Task SpecialitiesCheck(Guid specialityId)
+    {
+        var specialityEntity = await _context.Speciality.Where(s => s.Id == specialityId).FirstOrDefaultAsync();
+        if (specialityEntity == null)
+        {
+            throw new KeyNotFoundException($"speciality with id {specialityId} not found");
+        }
+    }
+
     private static void CheckGender(Gender gender)
     {
         if (gender is Gender.Male or Gender.Female) return;
@@ -174,7 +204,7 @@ public class DoctorService : IDoctorService
 
     private static void CheckBirthDate(DateTime? birthDate)
     {
-        if (birthDate == null || birthDate <= DateTime.Now) return;
+        if (birthDate == null || birthDate <= DateTime.UtcNow) return;
 
         throw new BadHttpRequestException("Birth date can't be later than today");
     }

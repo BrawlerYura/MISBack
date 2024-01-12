@@ -7,7 +7,7 @@ public interface IPatientService
 {
     Task<Guid> CreatePatient(PatientCreateModel patientCreateModel);
 
-    Task<PatientPagedListModel> GetPatientsList(string? name, List<string> conclusions, PatientSorting sorting,
+    Task<PatientPagedListModel> GetPatientsList(Guid doctorId, string? name, List<Conclusion>? conclusions, PatientSorting sorting,
         bool scheduledVisits = false, bool onlyMine = false, int page = 1, int size = 5);
 
     Task<Guid> CreateInspectionForPatient(Guid patientId, Guid doctorId, InspectionCreateModel inspectionCreateModel);

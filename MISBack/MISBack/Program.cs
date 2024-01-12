@@ -68,6 +68,7 @@ builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IInspectionService, InspectionService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<GlobalExceptionHandlingMiddleware>();
 
 builder.Services.AddHttpContextAccessor();
 

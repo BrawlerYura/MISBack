@@ -8,8 +8,5 @@ public class ConsultationCreateModel
     public Guid SpecialityId { get; set; }
     
     [Required]
-    public Guid InspectionId { get; set; }
-    
-    [Required]
     public InspectionCommentCreateModel Comment { get; set; }
 }

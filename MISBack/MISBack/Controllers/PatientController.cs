@@ -29,11 +29,16 @@ public class PatientController : ControllerBase
     [HttpGet]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<PatientPagedListModel> GetPatientsList([FromQuery] string? name,
-        [FromQuery] List<string> conclusions, [FromQuery] PatientSorting sorting,
+        [FromQuery] List<Conclusion>? conclusions, [FromQuery] PatientSorting sorting,
         [FromQuery] bool scheduledVisits = false, [FromQuery] bool onlyMine = false, [FromQuery] int page = 1,
         [FromQuery] int size = 5)
     {
-        return await _patientService.GetPatientsList(name, conclusions, sorting, scheduledVisits, onlyMine, page, size);
+        var value = User.Claims.FirstOrDefault(claim => claim.Type == ClaimsIdentity.DefaultNameClaimType)?.Value;
+        if (value == null) throw new Exception();
+        
+        var doctorId = Guid.Parse(value);
+        
+        return await _patientService.GetPatientsList(doctorId, name, conclusions, sorting, scheduledVisits, onlyMine, page, size);
     }
     
     [HttpPost]

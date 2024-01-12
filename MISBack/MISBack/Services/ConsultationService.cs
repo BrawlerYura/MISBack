@@ -26,9 +26,11 @@ public class ConsultationService : IConsultationService
         var groupedInspections = query
             .Where(i => i.BaseInspectionId == null)
             .GroupBy(i => i.Id)
-            .SelectMany(group => group.OrderBy(i => i.CreateTime)
-                .Union(group.Join(query, i => i.Id, j => j.PreviousInspectionId, (i, j) => j)
-                    .OrderBy(i => i.CreateTime)));
+            .SelectMany(group => group
+                .OrderBy(i => i.CreateTime)
+            )
+            .Skip((page - 1) * size)
+            .Take(size);
 
         var inspections = await groupedInspections.Skip((page - 1) * size)
             .Take(size).ToListAsync();
@@ -127,12 +129,12 @@ public class ConsultationService : IConsultationService
         var commentEntity = _mapper.Map<Comment>(comment);
         
         commentEntity.Id = Guid.NewGuid();
-        commentEntity.CreateTime = DateTime.Now;
+        commentEntity.CreateTime = DateTime.UtcNow;
         commentEntity.AuthorId = authorId;
         commentEntity.ConsultationId = consultationId;
 
         await _context.Comment.AddAsync(commentEntity);
-
+        await _context.SaveChangesAsync();
         return commentEntity.Id;
     }
 
@@ -145,7 +147,7 @@ public class ConsultationService : IConsultationService
         }
         
         commentEntity.Content = comment.Content;
-        commentEntity.ModifiedDate = DateTime.Now;
+        commentEntity.ModifiedDate = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
     }

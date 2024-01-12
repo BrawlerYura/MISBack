@@ -62,29 +62,31 @@ public class InspectionService : IInspectionService
         {
             var diagnosisICD10 =
                 await _context.Icd10.Where(d => d.Id == diagnosis.IcdDiagnosisId).FirstOrDefaultAsync();
-
+        
             if (diagnosisICD10 == null)
             {
                 throw new KeyNotFoundException($"diagnosis with id {diagnosis.IcdDiagnosisId} not found in icd10");
             }
-
+        
             var newDiagnosis = new Diagnosis
             {
                 Id = new Guid(),
-                CreateTime = DateTime.Now,
-                Code = diagnosisICD10.Code,
+                CreateTime = DateTime.UtcNow,
+                Code = diagnosisICD10.MkbCode,
                 Description = diagnosis.Description,
-                Name = diagnosisICD10.Name,
+                Name = diagnosisICD10.MkbName,
                 Type = diagnosis.Type
             };
-
+        
             await _context.Diagnosis.AddAsync(newDiagnosis);
+            await _context.SaveChangesAsync();
             
             await _context.InspectionDiagnosis.AddAsync(new InspectionDiagnosis
             {
                 InspectionId = inspectionId,
                 DiagnosisId = newDiagnosis.Id
             });
+            await _context.SaveChangesAsync();
         }
     }
 

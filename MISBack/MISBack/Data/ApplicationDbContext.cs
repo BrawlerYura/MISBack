@@ -1,5 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using MISBack.Data.Entities;
+using MISBack.Migrations;
+using Comment = MISBack.Data.Entities.Comment;
+using Consultation = MISBack.Data.Entities.Consultation;
+using Diagnosis = MISBack.Data.Entities.Diagnosis;
+using Doctor = MISBack.Data.Entities.Doctor;
+using Inspection = MISBack.Data.Entities.Inspection;
+using InspectionDiagnosis = MISBack.Data.Entities.InspectionDiagnosis;
+using Patient = MISBack.Data.Entities.Patient;
+using Speciality = MISBack.Data.Entities.Speciality;
+using Token = MISBack.Data.Entities.Token;
 
 namespace MISBack.Data;
 
