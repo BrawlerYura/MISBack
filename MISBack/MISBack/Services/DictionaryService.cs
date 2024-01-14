@@ -53,7 +53,7 @@ public class DictionaryService : IDictionaryService
             }
         };
 
-        if (page < 1 || page > count)
+        if (page < 1 || (page > count & count > 0))
         {
             throw new BadHttpRequestException("Invalid value for attribute page");
         }
@@ -108,7 +108,7 @@ public class DictionaryService : IDictionaryService
             }
         };
 
-        if (page < 1 || page > count)
+        if (page < 1 || (page > count & count > 0))
         {
             throw new BadHttpRequestException("Invalid value for attribute page");
         }

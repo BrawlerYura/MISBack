@@ -144,7 +144,7 @@ public class PatientService : IPatientService
             }
         };
 
-        if (page < 1 || page > count)
+        if (page < 1 || (page > count & count > 0))
         {
             throw new BadHttpRequestException("Invalid value for attribute page");
         }
@@ -184,14 +184,14 @@ public class PatientService : IPatientService
             inspectionEntity.BaseInspectionId = previousInspection.BaseInspectionId ?? previousInspection.Id;
         }
 
-        await _context.Inspection.AddAsync(inspectionEntity);
-        await _context.SaveChangesAsync();
-        await CreateDiagnoses(inspectionCreateModel.Diagnoses, inspectionEntity.Id);
-
         if (inspectionCreateModel.Consultations != null)
         {
             await CreateConsultations(inspectionCreateModel.Consultations, doctorId, inspectionEntity.Id);
         }
+        
+        await CreateDiagnoses(inspectionCreateModel.Diagnoses, inspectionEntity.Id);
+        await _context.Inspection.AddAsync(inspectionEntity);
+        await _context.SaveChangesAsync();
 
         return inspectionEntity.Id;
     }
@@ -263,7 +263,7 @@ public class PatientService : IPatientService
             inspectionModelList.Add(inspectionModel);
         }
         
-        var count = (int)Math.Ceiling((double)query.Count() / (double)size);
+        var count = (int)Math.Ceiling((double)inspectionModelList.Count() / (double)size);
 
         if (size <= 0)
         {
@@ -286,7 +286,7 @@ public class PatientService : IPatientService
             }
         };
 
-        if (page < 1 || page > count)
+        if (page < 1 || (page > count & count > 0))
         {
             throw new BadHttpRequestException("Invalid value for attribute page");
         }

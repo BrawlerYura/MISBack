@@ -31,5 +31,7 @@ public class AutoMapperProfile : Profile
         CreateMap<Inspection, InspectionShortModel>();
         CreateMap<Comment, CommentModel>();
         CreateMap<CommentModel, Comment>();
+        CreateMap<SpecialityModel, Speciality>();
+        CreateMap<Speciality, SpecialityModel>();
     }
 }

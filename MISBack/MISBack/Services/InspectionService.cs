@@ -111,11 +111,6 @@ public class InspectionService : IInspectionService
             .OrderByDescending(i => i.Date)
             .ToListAsync();
 
-        if (inspections == null || inspections.Count == 0)
-        {
-            throw new KeyNotFoundException($"No inspections found for root inspection with id {rootInspectionId}");
-        }
-
         var inspectionModels = new List<InspectionPreviewModel>();
 
         foreach (var inspection in inspections)
@@ -233,6 +228,14 @@ public class InspectionService : IInspectionService
             {
                 throw new KeyNotFoundException($"author with id {rootComment.AuthorId} comment not found");
             }
+
+            var specialityEntity = await _context.Speciality.FirstOrDefaultAsync(s => s.Id == consultation.SpecialityId);
+            if (specialityEntity == null)
+            {
+                throw new KeyNotFoundException($"speciality with id {consultation.SpecialityId} not found");
+            }
+
+            consultationModel.Speciality = _mapper.Map<SpecialityModel>(specialityEntity);
 
             consultationModel.RootComment.Author = _mapper.Map<DoctorModel>(author);
 

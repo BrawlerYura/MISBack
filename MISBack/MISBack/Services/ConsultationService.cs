@@ -87,7 +87,7 @@ public class ConsultationService : IConsultationService
             inspectionModelList.Add(inspectionModel);
         }
 
-        var count = (int)Math.Ceiling((double)query.Count() / (double)size);
+        var count = (int)Math.Ceiling((double)inspectionModelList.Count() / (double)size);
 
         if (size <= 0)
         {
@@ -110,7 +110,7 @@ public class ConsultationService : IConsultationService
             }
         };
 
-        if (page < 1 || page > count)
+        if (page < 1 || (page > count & count > 0))
         {
             throw new BadHttpRequestException("Invalid value for attribute page");
         }
@@ -185,15 +185,19 @@ public class ConsultationService : IConsultationService
         commentEntity.AuthorId = authorId;
         commentEntity.ConsultationId = consultationId;
 
-        var parentCommentEntity = await _context.Comment.FirstOrDefaultAsync(c => c.Id == comment.ParentId);
-        if (parentCommentEntity == null)
+        if (comment.ParentId != null)
         {
-            throw new BadHttpRequestException($"parent comment with id {comment.ParentId} not found");
-        }
-        if (parentCommentEntity.ConsultationId != commentEntity.ConsultationId)
-        {
-            throw new BadHttpRequestException(
-                "parent comment consultation does not match current comment consultation");
+            var parentCommentEntity = await _context.Comment.FirstOrDefaultAsync(c => c.Id == comment.ParentId);
+            if (parentCommentEntity == null)
+            {
+                throw new BadHttpRequestException($"parent comment with id {comment.ParentId} not found");
+            }
+
+            if (parentCommentEntity.ConsultationId != commentEntity.ConsultationId)
+            {
+                throw new BadHttpRequestException(
+                    "parent comment consultation does not match current comment consultation");
+            }
         }
 
         await _context.Comment.AddAsync(commentEntity);
