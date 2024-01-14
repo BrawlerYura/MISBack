@@ -5,14 +5,14 @@
 namespace MISBack.Migrations
 {
     /// <inheritdoc />
-    public partial class doctor : Migration
+    public partial class EmailingLogs : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "Password",
-                table: "Doctor",
+                name: "Email",
+                table: "EmailingLogs",
                 type: "text",
                 nullable: false,
                 defaultValue: "");
@@ -22,8 +22,8 @@ namespace MISBack.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Password",
-                table: "Doctor");
+                name: "Email",
+                table: "EmailingLogs");
         }
     }
 }

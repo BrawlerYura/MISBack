@@ -3,6 +3,7 @@ using System;
 using MISBack.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MISBack.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240114103737_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -141,24 +144,22 @@ namespace MISBack.Migrations
                     b.ToTable("Doctor");
                 });
 
-            modelBuilder.Entity("MISBack.Data.Entities.Icd10", b =>
+            modelBuilder.Entity("MISBack.Data.Entities.EmailingLogs", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Code")
-                        .HasColumnType("text");
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Logs")
+                        .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<Guid>("ParentId")
-                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Icd10");
+                    b.ToTable("EmailingLogs");
                 });
 
             modelBuilder.Entity("MISBack.Data.Entities.Inspection", b =>
@@ -233,6 +234,10 @@ namespace MISBack.Migrations
                     b.Property<DateTime>("CreateTime")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("Gender")
                         .HasColumnType("integer");
 
@@ -274,6 +279,41 @@ namespace MISBack.Migrations
                     b.HasKey("InvalidToken");
 
                     b.ToTable("Token");
+                });
+
+            modelBuilder.Entity("MISBack.Migrations.Icd10", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("Actual")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("AddlCode")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("IdParent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MkbCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MkbName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RecCode")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Icd10");
                 });
 #pragma warning restore 612, 618
         }

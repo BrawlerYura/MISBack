@@ -3,7 +3,6 @@ using System;
 using MISBack.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,11 +11,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MISBack.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231222110835_Initial")]
-    partial class Initial
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,6 +41,9 @@ namespace MISBack.Migrations
                     b.Property<DateTime>("CreateTime")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsRootComment")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -51,8 +51,6 @@ namespace MISBack.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ConsultationId");
 
                     b.ToTable("Comment");
                 });
@@ -74,8 +72,6 @@ namespace MISBack.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SpecialityId");
-
                     b.ToTable("Consultation");
                 });
 
@@ -94,9 +90,6 @@ namespace MISBack.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
-
-                    b.Property<Guid>("InspectionId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -133,6 +126,10 @@ namespace MISBack.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Phone")
                         .HasColumnType("text");
 
@@ -144,24 +141,26 @@ namespace MISBack.Migrations
                     b.ToTable("Doctor");
                 });
 
-            modelBuilder.Entity("MISBack.Data.Entities.Icd10", b =>
+            modelBuilder.Entity("MISBack.Data.Entities.EmailingLogs", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Code")
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Logs")
+                        .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<Guid>("ParentId")
-                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Icd10");
+                    b.ToTable("EmailingLogs");
                 });
 
             modelBuilder.Entity("MISBack.Data.Entities.Inspection", b =>
@@ -191,16 +190,13 @@ namespace MISBack.Migrations
                     b.Property<DateTime?>("DeathDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("DoctorId")
+                    b.Property<Guid>("DoctorId")
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("IsWithDiagnosis")
-                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("NextVisitDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("Patient")
+                    b.Property<Guid>("PatientId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("PreviousInspectionId")
@@ -214,6 +210,19 @@ namespace MISBack.Migrations
                     b.ToTable("Inspection");
                 });
 
+            modelBuilder.Entity("MISBack.Data.Entities.InspectionDiagnosis", b =>
+                {
+                    b.Property<Guid>("InspectionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DiagnosisId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("InspectionId", "DiagnosisId");
+
+                    b.ToTable("InspectionDiagnosis");
+                });
+
             modelBuilder.Entity("MISBack.Data.Entities.Patient", b =>
                 {
                     b.Property<Guid>("Id")
@@ -225,6 +234,10 @@ namespace MISBack.Migrations
 
                     b.Property<DateTime>("CreateTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("Gender")
                         .HasColumnType("integer");
@@ -269,27 +282,39 @@ namespace MISBack.Migrations
                     b.ToTable("Token");
                 });
 
-            modelBuilder.Entity("MISBack.Data.Entities.Comment", b =>
+            modelBuilder.Entity("MISBack.Migrations.Icd10", b =>
                 {
-                    b.HasOne("MISBack.Data.Entities.Consultation", null)
-                        .WithMany("Comments")
-                        .HasForeignKey("ConsultationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
 
-            modelBuilder.Entity("MISBack.Data.Entities.Consultation", b =>
-                {
-                    b.HasOne("MISBack.Data.Entities.Speciality", "Speciality")
-                        .WithMany()
-                        .HasForeignKey("SpecialityId");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Navigation("Speciality");
-                });
+                    b.Property<int?>("Actual")
+                        .HasColumnType("integer");
 
-            modelBuilder.Entity("MISBack.Data.Entities.Consultation", b =>
-                {
-                    b.Navigation("Comments");
+                    b.Property<int?>("AddlCode")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("IdParent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MkbCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MkbName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RecCode")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Icd10");
                 });
 #pragma warning restore 612, 618
         }

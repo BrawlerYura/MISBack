@@ -1,4 +1,5 @@
 using AutoMapper;
+using BlogApi.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using MISBack.Data;
 using MISBack.Data.Entities;
@@ -26,11 +27,14 @@ public class PatientService : IPatientService
             throw new BadHttpRequestException("Birth date mustn't be later then now");
         }
 
+        await CheckEmailUnique(patientCreateModel.Email);
+        
         var patient = new Patient
         {
             Id = Guid.NewGuid(),
             CreateTime = DateTime.UtcNow,
             Name = patientCreateModel.Name,
+            Email = patientCreateModel.Email,
             Birthday = patientCreateModel.Birthday,
             Gender = patientCreateModel.Gender
         };
@@ -39,6 +43,15 @@ public class PatientService : IPatientService
         await _context.SaveChangesAsync();
 
         return patient.Id;
+    }
+
+    private async Task CheckEmailUnique(string email)
+    {
+        var patientEntity = await _context.Patient.FirstOrDefaultAsync(p => p.Email == email);
+        if (patientEntity != null)
+        {
+            throw new ConflictException($"Patient with Email {email} already exists");
+        }
     }
 
     public async Task<PatientPagedListModel> GetPatientsList(Guid doctorId, string? name, List<Conclusion>? conclusions,
@@ -429,6 +442,10 @@ public class PatientService : IPatientService
     
     private async Task ValidateInspection(InspectionCreateModel inspectionCreateModel, Guid patientId)
     {
+        if (inspectionCreateModel.NextVisitDate <= DateTime.UtcNow)
+        {
+            throw new BadHttpRequestException("next visit date mustn't be less than now");
+        }
         var previousInspections = await _context.Inspection.Where(i => i.PatientId == patientId).ToListAsync();
         if (previousInspections != null)
         {

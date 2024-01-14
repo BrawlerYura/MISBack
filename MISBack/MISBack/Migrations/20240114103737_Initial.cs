@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -12,6 +13,38 @@ namespace MISBack.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Comment",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    AuthorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ParentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ConsultationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsRootComment = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Comment", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Consultation",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    InspectionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SpecialityId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Consultation", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Diagnosis",
                 columns: table => new
                 {
@@ -20,8 +53,7 @@ namespace MISBack.Migrations
                     Code = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
-                    Type = table.Column<int>(type: "integer", nullable: false),
-                    InspectionId = table.Column<Guid>(type: "uuid", nullable: false)
+                    Type = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -38,6 +70,7 @@ namespace MISBack.Migrations
                     BirthDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Gender = table.Column<int>(type: "integer", nullable: false),
                     Email = table.Column<string>(type: "text", nullable: false),
+                    Password = table.Column<string>(type: "text", nullable: false),
                     Phone = table.Column<string>(type: "text", nullable: true),
                     Speciality = table.Column<Guid>(type: "uuid", nullable: false)
                 },
@@ -47,13 +80,31 @@ namespace MISBack.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Icd10",
+                name: "EmailingLogs",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Code = table.Column<string>(type: "text", nullable: true),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    ParentId = table.Column<Guid>(type: "uuid", nullable: false)
+                    DateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Logs = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmailingLogs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Icd10",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Actual = table.Column<int>(type: "integer", nullable: true),
+                    AddlCode = table.Column<int>(type: "integer", nullable: true),
+                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IdParent = table.Column<int>(type: "integer", nullable: true),
+                    MkbCode = table.Column<string>(type: "text", nullable: false),
+                    MkbName = table.Column<string>(type: "text", nullable: true),
+                    RecCode = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -75,13 +126,24 @@ namespace MISBack.Migrations
                     DeathDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     BaseInspectionId = table.Column<Guid>(type: "uuid", nullable: true),
                     PreviousInspectionId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Patient = table.Column<Guid>(type: "uuid", nullable: false),
-                    DoctorId = table.Column<Guid>(type: "uuid", nullable: true),
-                    IsWithDiagnosis = table.Column<bool>(type: "boolean", nullable: false)
+                    PatientId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DoctorId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Inspection", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "InspectionDiagnosis",
+                columns: table => new
+                {
+                    InspectionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DiagnosisId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InspectionDiagnosis", x => new { x.InspectionId, x.DiagnosisId });
                 });
 
             migrationBuilder.CreateTable(
@@ -91,6 +153,7 @@ namespace MISBack.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     CreateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
                     Birthday = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Gender = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -123,58 +186,6 @@ namespace MISBack.Migrations
                 {
                     table.PrimaryKey("PK_Token", x => x.InvalidToken);
                 });
-
-            migrationBuilder.CreateTable(
-                name: "Consultation",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    InspectionId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SpecialityId = table.Column<Guid>(type: "uuid", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Consultation", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Consultation_Speciality_SpecialityId",
-                        column: x => x.SpecialityId,
-                        principalTable: "Speciality",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Comment",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Content = table.Column<string>(type: "text", nullable: false),
-                    AuthorId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ParentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    ConsultationId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Comment", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Comment_Consultation_ConsultationId",
-                        column: x => x.ConsultationId,
-                        principalTable: "Consultation",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Comment_ConsultationId",
-                table: "Comment",
-                column: "ConsultationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Consultation_SpecialityId",
-                table: "Consultation",
-                column: "SpecialityId");
         }
 
         /// <inheritdoc />
@@ -184,10 +195,16 @@ namespace MISBack.Migrations
                 name: "Comment");
 
             migrationBuilder.DropTable(
+                name: "Consultation");
+
+            migrationBuilder.DropTable(
                 name: "Diagnosis");
 
             migrationBuilder.DropTable(
                 name: "Doctor");
+
+            migrationBuilder.DropTable(
+                name: "EmailingLogs");
 
             migrationBuilder.DropTable(
                 name: "Icd10");
@@ -196,16 +213,16 @@ namespace MISBack.Migrations
                 name: "Inspection");
 
             migrationBuilder.DropTable(
+                name: "InspectionDiagnosis");
+
+            migrationBuilder.DropTable(
                 name: "Patient");
 
             migrationBuilder.DropTable(
-                name: "Token");
-
-            migrationBuilder.DropTable(
-                name: "Consultation");
-
-            migrationBuilder.DropTable(
                 name: "Speciality");
+
+            migrationBuilder.DropTable(
+                name: "Token");
         }
     }
 }

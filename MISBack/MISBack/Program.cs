@@ -9,7 +9,10 @@ using MISBack.Data;
 using MISBack.MiddleWares;
 using MISBack.Services;
 using MISBack.Services.Interfaces;
+using MISBack.Services.SchedulerService;
 using MISBack.Services.Token;
+using Quartz;
+using Quartz.Impl;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,6 +72,7 @@ builder.Services.AddScoped<IInspectionService, InspectionService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<GlobalExceptionHandlingMiddleware>();
+builder.Services.AddScoped<EmailingService>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -96,6 +100,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 
 var app = builder.Build();
+
+
+// Scheduler quartz
+var scheduler = new StdSchedulerFactory().GetScheduler().Result;
+scheduler.Start().Wait();
+
+var job = JobBuilder.Create<EmailingService>().Build();
+
+var trigger = TriggerBuilder.Create()
+    .WithIdentity("TriggerName", "GroupName")
+    .WithCronSchedule("0 0/5 * * * ?")
+    .Build();
+
+scheduler.ScheduleJob(job, trigger).Wait();
 
 //Auto migrations
 using var serviceScope = app.Services.CreateScope();
