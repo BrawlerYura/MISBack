@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,7 +31,12 @@ public class InspectionController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task EditInspection(Guid inspectionId, InspectionEditModel inspectionEditModel)
     {
-        await _inspectionService.EditInspection(inspectionId, inspectionEditModel);
+        var value = User.Claims.FirstOrDefault(claim => claim.Type == ClaimsIdentity.DefaultNameClaimType)?.Value;
+        if (value == null) throw new Exception();
+        
+        var doctorId = Guid.Parse(value);
+        
+        await _inspectionService.EditInspection(doctorId, inspectionId, inspectionEditModel);
     }
     
     [HttpGet]

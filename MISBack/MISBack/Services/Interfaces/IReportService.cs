@@ -5,5 +5,5 @@ namespace MISBack.Services.Interfaces;
 
 public interface IReportService
 {
-    Task<IcdRootsRepotModel> GetReport(DateTime start, DateTime end, List<string>? icdRoots);
+    Task<IcdRootsReportModel> GetReport(DateTime start, DateTime end, List<string>? icdRoots);
 }

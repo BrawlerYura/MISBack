@@ -17,27 +17,29 @@ public class DictionaryService : IDictionaryService
         _context = context;
         _mapper = mapper;
     }
-    
+
     public async Task<SpecialtiesPagedListModel> GetSpecialtiesList(string? name, int page = 1, int size = 5)
     {
         var query = _context.Speciality.AsQueryable();
 
         if (name != null & name != "")
         {
-            query = query.Where(speciality => speciality.Name.Contains(name));
+            query = query.Where(speciality =>
+                speciality.Name.Contains(name.ToUpper()) || speciality.Name.Contains(name.ToLower()));
         }
-        
+
         var count = (int)Math.Ceiling((double)query.Count() / (double)size);
-        if (count == 0)
-        {
-            throw new BadHttpRequestException("no specialities were found with this request");
-        }
         
+        if (size <= 0)
+        {
+            throw new BadHttpRequestException("Invalid value for attribute size");
+        }
+
         var specialities = await query
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
-        
+
         var specialityListModel = CreateSpecialityModel(specialities);
 
         var specialtiesPagedListModel = new SpecialtiesPagedListModel
@@ -45,7 +47,7 @@ public class DictionaryService : IDictionaryService
             Specialities = specialityListModel,
             Pagination = new PageInfoModel
             {
-                Size = specialityListModel.Count,
+                Size = size,
                 Count = count,
                 Current = page
             }
@@ -62,25 +64,26 @@ public class DictionaryService : IDictionaryService
     public async Task<Icd10SearchModel> GetDiagnosisList(string? request, int page = 1, int size = 5)
     {
         var query = _context.Icd10.AsQueryable();
-        
-        if(request != null & request != "")
+
+        if (request != null & request != "")
         {
-            query = query.Where(i => i.MkbName.Contains(request) || i.MkbCode.Contains(request));
+            query = query.Where(i => i.MkbName.Contains(request) || i.MkbCode.Contains(request.ToUpper()));
         }
-        
+
         var count = (int)Math.Ceiling((double)query.Count() / (double)size);
-        if (count == 0)
+
+        if (size <= 0)
         {
-            throw new BadHttpRequestException("no specialities were found with this request");
+            throw new BadHttpRequestException("Invalid value for attribute size");
         }
-        
+
         var diagnoses = await query
             .Skip((page - 1) * size)
             .Take(size)
             .ToListAsync();
 
         var diagnosisModelList = new List<Icd10RecordModel>();
-        
+
         foreach (var diagnosis in diagnoses)
         {
             var diagnosisModel = new Icd10RecordModel
@@ -90,7 +93,7 @@ public class DictionaryService : IDictionaryService
                 Code = diagnosis.MkbCode,
                 Name = diagnosis.MkbName
             };
-            
+
             diagnosisModelList.Add(diagnosisModel);
         }
 
@@ -99,7 +102,7 @@ public class DictionaryService : IDictionaryService
             Records = diagnosisModelList,
             Pagination = new PageInfoModel
             {
-                Size = diagnosisModelList.Count,
+                Size = size,
                 Count = count,
                 Current = page
             }
@@ -134,7 +137,7 @@ public class DictionaryService : IDictionaryService
             };
             icdModelList.Add(icdModel);
         }
-        
+
         return icdModelList;
     }
 

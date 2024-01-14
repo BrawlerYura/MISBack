@@ -1,4 +1,5 @@
 using AutoMapper;
+using BlogApi.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using MISBack.Data;
 using MISBack.Data.Entities;
@@ -18,67 +19,116 @@ public class ConsultationService : IConsultationService
         _context = context;
         _mapper = mapper;
     }
-    
-    public async Task<InspectionPagedListModel> GetInspectionsList(bool grouped, List<string>? icdRoots, int page, int size)
+
+    public async Task<InspectionPagedListModel> GetInspectionsList(List<string>? icdRoots, int page = 1, int size = 5,
+        bool grouped = false)
     {
         var query = _context.Inspection.AsQueryable();
 
-        var groupedInspections = query
-            .Where(i => i.BaseInspectionId == null)
-            .GroupBy(i => i.Id)
-            .SelectMany(group => group
-                .OrderBy(i => i.CreateTime)
-            )
-            .Skip((page - 1) * size)
-            .Take(size);
+        if (grouped)
+        {
+            query = query.Where(i => i.PreviousInspectionId == null);
+        }
 
-        var inspections = await groupedInspections.Skip((page - 1) * size)
-            .Take(size).ToListAsync();
+        var inspectionsList = await query.ToListAsync();
 
-        var inspectionModels = new List<InspectionPreviewModel>();
-        
-        foreach (var inspection in inspections)
+        var inspectionModelList = new List<InspectionPreviewModel>();
+        foreach (var inspection in inspectionsList)
         {
             var inspectionModel = _mapper.Map<InspectionPreviewModel>(inspection);
 
-            var diagnosisEntity = await _context.InspectionDiagnosis
-                .Where(d => d.InspectionId == inspection.Id)
-                .Join(
-                    _context.Diagnosis,
-                    id => id.DiagnosisId,
-                    d => d.Id,
-                    (id, d) => d
-                )
-                .Where(d => d.Type == DiagnosisType.Main)
-                .FirstOrDefaultAsync();
-
-            if (diagnosisEntity != null)
+            var doctorEntity = await _context.Doctor.FirstOrDefaultAsync(d => d.Id == inspection.DoctorId);
+            if (doctorEntity == null)
             {
-                inspectionModel.Diagnosis = _mapper.Map<DiagnosisModel>(diagnosisEntity);
+                throw new KeyNotFoundException($"doctor with id {inspection.DoctorId} not found in inspection {inspection.Id}");
             }
 
-            var hasNested = await _context.Inspection
-                .AnyAsync(i => i.PreviousInspectionId == inspection.Id);
+            inspectionModel.Doctor = doctorEntity.Name;
 
-            inspectionModel.HasNested = hasNested;
+            var patientEntity = await _context.Patient.FirstOrDefaultAsync(p => p.Id == inspection.PatientId);
+            if (patientEntity == null)
+            {
+                throw new KeyNotFoundException($"patient with id {inspection.PatientId} not found in inspection {inspection.Id}");
+            }
 
-            inspectionModel.HasChain = inspection.BaseInspectionId != null;
-            
-            inspectionModels.Add(inspectionModel);
+            inspectionModel.Patient = patientEntity.Name;
+
+            var inspectionDiagnosisList = await _context.InspectionDiagnosis
+                .Where(id => id.InspectionId == inspection.Id)
+                .ToListAsync();
+
+            foreach (var inspectionDiagnosis in inspectionDiagnosisList)
+            {
+                var diagnosis =
+                    await _context.Diagnosis.FirstOrDefaultAsync(d => d.Id == inspectionDiagnosis.DiagnosisId);
+                if (diagnosis != null & diagnosis.Type == DiagnosisType.Main)
+                {
+                    inspectionModel.Diagnosis = _mapper.Map<DiagnosisModel>(diagnosis);
+                    break;
+                }
+            }
+
+            if (icdRoots != null & icdRoots.Count > 0)
+            {
+                var isInRoot = await IsInRoot(inspectionModel.Diagnosis, icdRoots);
+                if (!isInRoot)
+                {
+                    continue;
+                }
+            }
+
+            inspectionModel.HasNested = inspection.BaseInspectionId == null;
+
+            var nextInspection =
+                await _context.Inspection.FirstOrDefaultAsync(i => i.PreviousInspectionId == inspection.Id);
+
+            inspectionModel.HasChain = nextInspection != null;
+
+            inspectionModelList.Add(inspectionModel);
         }
-        
-        var inspectionPagedListDto = new InspectionPagedListModel
+
+        var count = (int)Math.Ceiling((double)query.Count() / (double)size);
+
+        if (size <= 0)
         {
-            Inspections = inspectionModels,
+            throw new BadHttpRequestException("Invalid value for attribute size");
+        }
+
+        inspectionModelList = inspectionModelList
+            .Skip((page - 1) * size)
+            .Take(size)
+            .ToList();
+
+        var inspectionPagedListModel = new InspectionPagedListModel
+        {
+            Inspections = inspectionModelList,
             Pagination = new PageInfoModel
             {
-                Size = inspections.Count,
-                Count = groupedInspections.Count(),
+                Size = size,
+                Count = count,
                 Current = page
             }
         };
 
-        return inspectionPagedListDto;
+        if (page < 1 || page > count)
+        {
+            throw new BadHttpRequestException("Invalid value for attribute page");
+        }
+
+        return inspectionPagedListModel;
+    }
+
+    private async Task<bool> IsInRoot(DiagnosisModel diagnosisModel, List<string>? icdRoots)
+    {
+        var diagnosis = await _context.Icd10.FirstOrDefaultAsync(i => i.MkbCode == diagnosisModel.Code);
+        if (diagnosis == null)
+        {
+            throw new KeyNotFoundException($"diagnosis with code {diagnosisModel.Code} not found in icd-10");
+        }
+
+        var icdRoot = await _context.Icd10.FirstOrDefaultAsync(ir => ir.RecCode == diagnosis.RecCode.Substring(0, 2));
+
+        return icdRoots.Contains(icdRoot.MkbCode.ToUpper()) || icdRoots.Contains(icdRoot.MkbName);
     }
 
     public async Task<ConsultationModel> GetConsultation(Guid consultationId)
@@ -91,7 +141,8 @@ public class ConsultationService : IConsultationService
 
         var consultationModel = _mapper.Map<ConsultationModel>(consultationEntity);
 
-        var specialityEntity = await _context.Speciality.FirstOrDefaultAsync(s => s.Id == consultationEntity.SpecialityId);
+        var specialityEntity =
+            await _context.Speciality.FirstOrDefaultAsync(s => s.Id == consultationEntity.SpecialityId);
         if (specialityEntity == null)
         {
             throw new KeyNotFoundException($"speciality with id {consultationEntity.SpecialityId} not found");
@@ -99,7 +150,8 @@ public class ConsultationService : IConsultationService
 
         consultationModel.Speciality = _mapper.Map<SpecialityModel>(specialityEntity);
 
-        var commentsEntityList = await _context.Comment.Where(c => c.ConsultationId == consultationEntity.Id).ToListAsync();
+        var commentsEntityList =
+            await _context.Comment.Where(c => c.ConsultationId == consultationEntity.Id).ToListAsync();
 
         var commentModelList = new List<CommentModel>();
 
@@ -113,9 +165,9 @@ public class ConsultationService : IConsultationService
             {
                 throw new KeyNotFoundException($"author with id {commentEntity.AuthorId} not found");
             }
-            
+
             commentModel.Author = author.Name;
-            
+
             commentModelList.Add(commentModel);
         }
 
@@ -127,25 +179,44 @@ public class ConsultationService : IConsultationService
     public async Task<Guid> AddComment(Guid consultationId, Guid authorId, CommentCreateModel comment)
     {
         var commentEntity = _mapper.Map<Comment>(comment);
-        
+
         commentEntity.Id = Guid.NewGuid();
         commentEntity.CreateTime = DateTime.UtcNow;
         commentEntity.AuthorId = authorId;
         commentEntity.ConsultationId = consultationId;
+
+        var parentCommentEntity = await _context.Comment.FirstOrDefaultAsync(c => c.Id == comment.ParentId);
+        if (parentCommentEntity == null)
+        {
+            throw new BadHttpRequestException($"parent comment with id {comment.ParentId} not found");
+        }
+        if (parentCommentEntity.ConsultationId != commentEntity.ConsultationId)
+        {
+            throw new BadHttpRequestException(
+                "parent comment consultation does not match current comment consultation");
+        }
 
         await _context.Comment.AddAsync(commentEntity);
         await _context.SaveChangesAsync();
         return commentEntity.Id;
     }
 
-    public async Task EditComment(Guid commentId, InspectionCommentCreateModel comment)
+    public async Task EditComment(Guid authorId, Guid commentId, InspectionCommentCreateModel comment)
     {
         var commentEntity = await _context.Comment.Where(c => c.Id == commentId).FirstOrDefaultAsync();
         if (commentEntity == null)
         {
             throw new KeyNotFoundException($"comment with id {commentId} not found");
         }
-        
+        if (commentEntity.Content == comment.Content)
+        {
+            throw new BadHttpRequestException("content has not been changed");
+        }
+        if (commentEntity.AuthorId != authorId)
+        {
+            throw new ForbiddenException("You can't change not yours comment");
+        }
+
         commentEntity.Content = comment.Content;
         commentEntity.ModifiedDate = DateTime.UtcNow;
 

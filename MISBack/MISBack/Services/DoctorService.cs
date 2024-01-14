@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text.RegularExpressions;
 using AutoMapper;
 using BlogApi.Configurations;
+using BlogApi.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MISBack.Data;
@@ -134,7 +135,7 @@ public class DoctorService : IDoctorService
 
         if (doctor != null && doctor.Id != doctorId)
         {
-            throw new BadHttpRequestException("Doctor with this Email already exists");
+            throw new ConflictException("Doctor with this Email already exists");
         }
         
         if(doctorEditModel.Phone != null)
@@ -145,7 +146,7 @@ public class DoctorService : IDoctorService
 
             if (doctor != null)
             {
-                throw new BadHttpRequestException("Doctor with this Phone number already exists");
+                throw new ConflictException("Doctor with this Phone number already exists");
             }
         }
         
@@ -169,7 +170,7 @@ public class DoctorService : IDoctorService
 
         if (doctor != null)
         {
-            throw new BadHttpRequestException("Doctor with this Email already exists");
+            throw new ConflictException("Doctor with this Email already exists");
         }
         
         if(doctorRegisterModel.Phone != null)
@@ -180,7 +181,7 @@ public class DoctorService : IDoctorService
 
             if (doctor != null)
             {
-                throw new BadHttpRequestException("Doctor with this Phone number already exists");
+                throw new ConflictException("Doctor with this Phone number already exists");
             }
         }
     }
@@ -256,7 +257,7 @@ public class DoctorService : IDoctorService
 
         if (!regex.IsMatch(password))
         {
-            throw new BadHttpRequestException("Password can contain letters and numbers and ! ?");
+            throw new BadHttpRequestException("Password can contain only letters and numbers and ! ?");
         }
     }
 }

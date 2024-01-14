@@ -92,18 +92,25 @@ public class PatientService : IPatientService
                 break;
             case PatientSorting.InspectionAsc:
                 query = query.OrderBy(patient => _context.Inspection
-                    .Where(i => i.PatientId == patient.Id).OrderBy(i => i.Date));
+                    .Where(i => i.PatientId == patient.Id)
+                    .OrderBy(i => i.Date)
+                    .Select(i => i.Date)
+                    .FirstOrDefault());
                 break;
             case PatientSorting.InspectionDesc:
                 query = query.OrderByDescending(patient => _context.Inspection
-                    .Where(i => i.PatientId == patient.Id).OrderByDescending(i => i.Date));
+                    .Where(i => i.PatientId == patient.Id)
+                    .OrderByDescending(i => i.Date)
+                    .Select(i => i.Date)
+                    .FirstOrDefault());
                 break;
         }
 
         var count = (int)Math.Ceiling((double)query.Count() / (double)size);
-        if (count == 0)
+
+        if (size <= 0)
         {
-            throw new BadHttpRequestException("no users were found with this request");
+            throw new BadHttpRequestException("Invalid value for attribute size");
         }
 
         var patients = await query
@@ -118,7 +125,7 @@ public class PatientService : IPatientService
             Patients = patientListModel,
             Pagination = new PageInfoModel
             {
-                Size = patientListModel.Count,
+                Size = size,
                 Count = count,
                 Current = page
             }
@@ -156,8 +163,12 @@ public class PatientService : IPatientService
             {
                 throw new KeyNotFoundException($"inspection with id {inspectionEntity.PreviousInspectionId} not found");
             }
+            if (previousInspection.PatientId != patientId)
+            {
+                throw new BadHttpRequestException("previous inspection patient not the same as in current");
+            }
 
-            inspectionEntity.BaseInspectionId = previousInspection.BaseInspectionId;
+            inspectionEntity.BaseInspectionId = previousInspection.BaseInspectionId ?? previousInspection.Id;
         }
 
         await _context.Inspection.AddAsync(inspectionEntity);
@@ -172,10 +183,102 @@ public class PatientService : IPatientService
         return inspectionEntity.Id;
     }
 
-    public Task<InspectionPagedListModel> GetPatientsInspectionsList(Guid patientId, List<string>? icdRoots,
+    public async Task<InspectionPagedListModel> GetPatientsInspectionsList(Guid patientId, List<string>? icdRoots,
         bool grouped = false, int page = 1, int size = 5)
     {
-        throw new NotImplementedException();
+        var query = _context.Inspection.Where(i => i.PatientId == patientId).AsQueryable();
+
+        if (grouped)
+        {
+            query = query.Where(i => i.PreviousInspectionId == null);
+        }
+        
+        var inspectionsList = await query.ToListAsync();
+        
+        var inspectionModelList = new List<InspectionPreviewModel>();
+        foreach (var inspection in inspectionsList)
+        {
+            var inspectionModel = _mapper.Map<InspectionPreviewModel>(inspection);
+
+            var doctorEntity = await _context.Doctor.FirstOrDefaultAsync(d => d.Id == inspection.DoctorId);
+            if (doctorEntity == null)
+            {
+                throw new KeyNotFoundException($"doctor with id {inspection.DoctorId} not found in inspection {inspection.Id}");
+            }
+
+            inspectionModel.Doctor = doctorEntity.Name;
+
+            var patientEntity = await _context.Patient.FirstOrDefaultAsync(p => p.Id == inspection.PatientId);
+            if (patientEntity == null)
+            {
+                throw new KeyNotFoundException($"patient with id {inspection.PatientId} not found in inspection {inspection.Id}");
+            }
+
+            inspectionModel.Patient = patientEntity.Name;
+
+            var inspectionDiagnosisList = await _context.InspectionDiagnosis
+                .Where(id => id.InspectionId == inspection.Id)
+                .ToListAsync();
+            
+            foreach (var inspectionDiagnosis in inspectionDiagnosisList)
+            {
+                var diagnosis =
+                    await _context.Diagnosis.FirstOrDefaultAsync(d => d.Id == inspectionDiagnosis.DiagnosisId);
+                if (diagnosis != null & diagnosis.Type == DiagnosisType.Main)
+                {
+                    inspectionModel.Diagnosis = _mapper.Map<DiagnosisModel>(diagnosis);
+                    break;
+                }
+            }
+
+            if (icdRoots != null & icdRoots.Count > 0)
+            {
+                var isInRoot = await IsInRoot(inspectionModel.Diagnosis, icdRoots);
+                if (!isInRoot)
+                {
+                    continue;
+                }
+            }
+            
+            inspectionModel.HasNested = inspection.BaseInspectionId == null;
+
+            var nextInspection =
+                await _context.Inspection.FirstOrDefaultAsync(i => i.PreviousInspectionId == inspection.Id);
+
+            inspectionModel.HasChain = nextInspection != null;
+            
+            inspectionModelList.Add(inspectionModel);
+        }
+        
+        var count = (int)Math.Ceiling((double)query.Count() / (double)size);
+
+        if (size <= 0)
+        {
+            throw new BadHttpRequestException("Invalid value for attribute size");
+        }
+
+        inspectionModelList = inspectionModelList
+            .Skip((page - 1) * size)
+            .Take(size)
+            .ToList();
+
+        var inspectionPagedListModel = new InspectionPagedListModel
+        {
+            Inspections = inspectionModelList,
+            Pagination = new PageInfoModel
+            {
+                Size = size,
+                Count = count,
+                Current = page
+            }
+        };
+
+        if (page < 1 || page > count)
+        {
+            throw new BadHttpRequestException("Invalid value for attribute page");
+        }
+
+        return inspectionPagedListModel;
     }
 
     public async Task<PatientModel> GetPatientCard(Guid patientId)
@@ -190,9 +293,50 @@ public class PatientService : IPatientService
         return _mapper.Map<PatientModel>(patientEntity);
     }
 
-    public Task<PatientModel> SearchPatientMedicalInspections(Guid patientId, string? request)
+    public async Task<List<InspectionShortModel>> SearchPatientMedicalInspections(Guid patientId, string? request)
     {
-        throw new NotImplementedException();
+        var query = _context.Inspection.Where(i => i.PatientId == patientId).AsQueryable();
+
+        var notInQuery = query
+            .Where(i => _context.Inspection.Any(newIns => newIns.PreviousInspectionId == i.Id));
+        query = query.Except(notInQuery);
+
+        var childInspections = await query.ToListAsync();
+
+        var inspectionShortModelList = new List<InspectionShortModel>();
+        foreach (var childInspection in childInspections)
+        {
+            var inspectionShortModel = _mapper.Map<InspectionShortModel>(childInspection);
+
+            var inspectionDiagnosisList = await _context.InspectionDiagnosis
+                .Where(id => id.InspectionId == childInspection.Id).ToListAsync();
+            foreach (var inspectionDiagnosis in inspectionDiagnosisList)
+            {
+                var diagnosis = await _context.Diagnosis.Where(d => d.Id == inspectionDiagnosis.DiagnosisId)
+                    .FirstOrDefaultAsync();
+
+                if (diagnosis != null & diagnosis.Type == DiagnosisType.Main)
+                {
+                    inspectionShortModel.Diagnosis = _mapper.Map<DiagnosisModel>(diagnosis);
+                    break;
+                }
+            }
+
+            if (request is { Length: > 0 })
+            {
+                if (inspectionShortModel.Diagnosis.Name.Contains(request) ||
+                    inspectionShortModel.Diagnosis.Code.Contains(request))
+                {
+                    inspectionShortModelList.Add(inspectionShortModel);
+                }
+            }
+            else
+            {
+                inspectionShortModelList.Add(inspectionShortModel);
+            }
+        }
+
+        return inspectionShortModelList;
     }
 
     private async Task CreateDiagnoses(List<DiagnosisCreateModel> diagnoses, Guid inspectionId)
@@ -271,6 +415,18 @@ public class PatientService : IPatientService
         return patientListModel;
     }
 
+    private async Task<bool> IsInRoot( DiagnosisModel diagnosisModel, List<string>? icdRoots)
+    {
+        var diagnosis = await _context.Icd10.FirstOrDefaultAsync(i => i.MkbCode == diagnosisModel.Code);
+        if (diagnosis == null)
+        {
+            throw new KeyNotFoundException($"diagnosis with code {diagnosisModel.Code} not found in icd-10");
+        }
+        var icdRoot = await _context.Icd10.FirstOrDefaultAsync(ir => ir.RecCode == diagnosis.RecCode.Substring(0, 2));
+
+        return icdRoots.Contains(icdRoot.MkbCode) || icdRoots.Contains(icdRoot.MkbName);
+    }
+    
     private async Task ValidateInspection(InspectionCreateModel inspectionCreateModel, Guid patientId)
     {
         var previousInspections = await _context.Inspection.Where(i => i.PatientId == patientId).ToListAsync();
@@ -285,12 +441,28 @@ public class PatientService : IPatientService
             }
         }
 
+        if (inspectionCreateModel.PreviousInspectionId != null)
+        {
+            var prevInspectionInChain =
+                await _context.Inspection.FirstOrDefaultAsync(i => i.Id == inspectionCreateModel.PreviousInspectionId);
+
+            if (prevInspectionInChain == null)
+            {
+                throw new KeyNotFoundException("previous inspection not found");
+            }
+
+            if (prevInspectionInChain.Conclusion == Conclusion.Recovery)
+            {
+                throw new BadHttpRequestException("patient already recovered");
+            }
+        }
+
         if (inspectionCreateModel.Date > DateTime.UtcNow)
         {
             throw new BadHttpRequestException("Date mustn't be later then now");
         }
 
-        
+
         var flag = false;
         foreach (var diagnosis in inspectionCreateModel.Diagnoses)
         {
@@ -305,12 +477,13 @@ public class PatientService : IPatientService
                 flag = true;
             }
         }
+
         if (!flag)
         {
             throw new BadHttpRequestException("inspection must necessarily have one diagnosis with the type “Main”");
         }
 
-        
+
         switch (inspectionCreateModel.Conclusion)
         {
             case Conclusion.Disease:
@@ -354,7 +527,7 @@ public class PatientService : IPatientService
 
                 break;
         }
-        
+
         if (inspectionCreateModel.Consultations != null && inspectionCreateModel.Consultations.Count > 0)
         {
             var uniqueSpecialityIds = new HashSet<Guid>();
@@ -364,6 +537,15 @@ public class PatientService : IPatientService
                 if (!uniqueSpecialityIds.Add(consultation.SpecialityId))
                 {
                     throw new ArgumentException("duplicate speciality found in consultations");
+                }
+                else
+                {
+                    var specialityEntity =
+                        await _context.Speciality.FirstOrDefaultAsync(s => s.Id == consultation.SpecialityId);
+                    if (specialityEntity == null)
+                    {
+                        throw new KeyNotFoundException($"speciality with id {consultation.SpecialityId} not found");
+                    }
                 }
 
                 if (consultation.Comment == null)

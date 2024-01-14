@@ -17,5 +17,5 @@ public interface IPatientService
 
     Task<PatientModel> GetPatientCard(Guid patientId);
 
-    Task<PatientModel> SearchPatientMedicalInspections(Guid patientId, string? request);
+    Task<List<InspectionShortModel>> SearchPatientMedicalInspections(Guid patientId, string? request);
 }

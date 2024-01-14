@@ -13,7 +13,7 @@ public partial class Icd10
 
     public int? IdParent { get; set; }
 
-    public string? MkbCode { get; set; }
+    public string MkbCode { get; set; }
 
     public string? MkbName { get; set; }
 

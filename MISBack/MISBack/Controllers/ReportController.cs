@@ -16,7 +16,7 @@ public class ReportController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IcdRootsRepotModel> GetReport([FromQuery] DateTime start, [FromQuery] DateTime end,
+    public async Task<IcdRootsReportModel> GetReport([FromQuery] DateTime start, [FromQuery] DateTime end,
         [FromQuery] List<string>? icdRoots)
     {
         return await _reportService.GetReport(start, end, icdRoots);

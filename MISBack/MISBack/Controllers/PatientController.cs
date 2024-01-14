@@ -75,7 +75,7 @@ public class PatientController : ControllerBase
     [HttpGet]
     [Route("{patientId}/inspections/search")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<PatientModel> SearchPatientMedicalInspections(Guid patientId, [FromQuery] string? request)
+    public async Task<List<InspectionShortModel>> SearchPatientMedicalInspections(Guid patientId, [FromQuery] string? request)
     {
         return await _patientService.SearchPatientMedicalInspections(patientId, request);
     }

@@ -21,9 +21,9 @@ public class ConsultationController : ControllerBase
     [HttpGet]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<InspectionPagedListModel> GetInspectionsList([FromQuery] bool grouped,
-        [FromQuery] List<string>? icdRoots, [FromQuery] int page, [FromQuery] int size)
+        [FromQuery] List<string>? icdRoots, [FromQuery] int page = 1, [FromQuery] int size = 5)
     {
-        return await _consultationService.GetInspectionsList(grouped, icdRoots, page, size);
+        return await _consultationService.GetInspectionsList(icdRoots, page, size, grouped);
     }
     
     [HttpGet]
@@ -52,6 +52,11 @@ public class ConsultationController : ControllerBase
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task EditComment(Guid commentId, InspectionCommentCreateModel comment)
     {
-        await _consultationService.EditComment(commentId, comment);
+        var value = User.Claims.FirstOrDefault(claim => claim.Type == ClaimsIdentity.DefaultNameClaimType)?.Value;
+        if (value == null) throw new Exception();
+        
+        var authorId = Guid.Parse(value);
+        
+        await _consultationService.EditComment(authorId, commentId, comment);
     }
 }

@@ -1,4 +1,5 @@
 using AutoMapper;
+using BlogApi.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using MISBack.AutoMapper;
 using MISBack.Data;
@@ -40,13 +41,17 @@ public class InspectionService : IInspectionService
         return inspectionModel;
     }
 
-    public async Task EditInspection(Guid inspectionId, InspectionEditModel inspectionEditModel)
+    public async Task EditInspection(Guid doctorId, Guid inspectionId, InspectionEditModel inspectionEditModel)
     {
         var inspectionEntity = await _context.Inspection
             .FirstOrDefaultAsync(x => x.Id == inspectionId);
         if (inspectionEntity == null)
         {
             throw new KeyNotFoundException($"inspection with id {inspectionId} not found");
+        }
+        if (inspectionEntity.DoctorId != doctorId)
+        {
+            throw new ForbiddenException("you cant change this inspection");
         }
 
         inspectionEntity.Anamnesis = inspectionEditModel.Anamnesis;
@@ -55,7 +60,9 @@ public class InspectionService : IInspectionService
         inspectionEntity.Conclusion = inspectionEditModel.Conclusion;
         inspectionEntity.NextVisitDate = inspectionEditModel.NextVisitDate;
         inspectionEntity.DeathDate = inspectionEditModel.DeathDate;
-
+        
+        await ValidateInspection(inspectionEditModel);
+        
         await _context.SaveChangesAsync();
         
         foreach (var diagnosis in inspectionEditModel.Diagnoses)
@@ -92,10 +99,16 @@ public class InspectionService : IInspectionService
 
     public async Task<List<InspectionPreviewModel>> GetInspectionForRoot(Guid rootInspectionId)
     {
+        var rootInspection =
+            await _context.Inspection.FirstOrDefaultAsync(i => i.Id == rootInspectionId & i.BaseInspectionId == null);
+        if (rootInspection == null)
+        {
+            throw new KeyNotFoundException($"inspection with id {rootInspectionId} not root");
+        }
+        
         var inspections = await _context.Inspection
             .Where(i => i.BaseInspectionId == rootInspectionId)
-            .OrderByDescending(i => i.BaseInspectionId == i.Id)
-            .ThenBy(i => i.PreviousInspectionId)
+            .OrderByDescending(i => i.Date)
             .ToListAsync();
 
         if (inspections == null || inspections.Count == 0)
@@ -131,7 +144,7 @@ public class InspectionService : IInspectionService
             inspectionModel.HasNested = hasNested;
 
             inspectionModel.HasChain = inspectionModel.Id == rootInspectionId;
-            
+
             inspectionModels.Add(inspectionModel);
         }
 
@@ -227,5 +240,73 @@ public class InspectionService : IInspectionService
         }
 
         return consultationsModelList;
+    }
+
+    private async Task ValidateInspection(InspectionEditModel inspectionCreateModel)
+    {
+        var flag = false;
+        foreach (var diagnosis in inspectionCreateModel.Diagnoses)
+        {
+            if (diagnosis.Type == DiagnosisType.Main)
+            {
+                if (flag)
+                {
+                    throw new BadHttpRequestException(
+                        "inspection must necessarily have only one diagnosis with the type “Main”");
+                }
+
+                flag = true;
+            }
+        }
+
+        if (!flag)
+        {
+            throw new BadHttpRequestException("inspection must necessarily have one diagnosis with the type “Main”");
+        }
+
+
+        switch (inspectionCreateModel.Conclusion)
+        {
+            case Conclusion.Disease:
+                if (inspectionCreateModel.NextVisitDate == null)
+                {
+                    throw new BadHttpRequestException(
+                        "when conclusion is “Disease”, it is necessary to specify the date and time of the next visit");
+                }
+
+                if (inspectionCreateModel.DeathDate != null)
+                {
+                    throw new BadHttpRequestException("when conclusion is “Disease”, then you can't set a death date");
+                }
+
+                break;
+            case Conclusion.Death:
+                if (inspectionCreateModel.DeathDate == null)
+                {
+                    throw new BadHttpRequestException(
+                        "when conclusion is “Death”, it is necessary to specify the death date");
+                }
+
+                if (inspectionCreateModel.NextVisitDate != null)
+                {
+                    throw new BadHttpRequestException(
+                        "when conclusion is “Death”, then you can't set a next visit date");
+                }
+
+                break;
+            case Conclusion.Recovery:
+                if (inspectionCreateModel.NextVisitDate != null)
+                {
+                    throw new BadHttpRequestException(
+                        "when conclusion is “Recovery”, then you can't set a next visit date");
+                }
+
+                if (inspectionCreateModel.DeathDate != null)
+                {
+                    throw new BadHttpRequestException("when conclusion is “Recovery”, then you can't set a death date");
+                }
+
+                break;
+        }
     }
 }
